@@ -13,10 +13,10 @@ int main(int argc, char *argv[]) {
 	int constant = addConstant(&chunk, 1.2);
 	
 	
-	writeChunk(&chunk, OP_CONSTANT);
-	writeChunk(&chunk, constant);
+	writeChunk(&chunk, OP_CONSTANT, 10);
+	writeChunk(&chunk, constant, 10);
 	
-	writeChunk(&chunk, OP_RETURN);
+	writeChunk(&chunk, OP_RETURN, 10);
 	
 	disassembleChunk(&chunk, "test_chunk");
 	
