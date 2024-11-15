@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
 	
 	disassembleChunk(&chunk, "test_chunk");
 	
+	interpret(&chunk);
+	
 	freeVM();
 	freeChunk(&chunk);
 	
