@@ -46,6 +46,7 @@
 *.res
 *.rc
 *.ico
+*.layout
 CUSL_private.h
 
 # Kernel Module Compile Results
