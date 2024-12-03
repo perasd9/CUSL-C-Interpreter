@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "vm.h"
 
+
 int main(int argc, char *argv[]) {
 	initVM();
 	
@@ -27,7 +28,6 @@ int main(int argc, char *argv[]) {
 	
 	freeVM();
 	freeChunk(&chunk);
-	
 	
 	return 0;
 }
