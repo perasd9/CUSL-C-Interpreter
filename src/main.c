@@ -1,48 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
 
+static void repl() {
+	char line[1024];
+	
+	for(;;) {
+		printf("> ");
+		
+		if(!fgets(line, sizeof(line), stdin)) {
+			printf("\n");
+			break;
+		}
+		
+		interpret(line);
+	}
+}
+
+static void runFile(const char* path) {
+	char* source = readFile(path);
+	
+	InterpretResult result = interpret(source);
+	
+	free(source);
+	
+	if(result == INTERPRET_COMPILE_ERROR) exit(65);
+	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
+}
+
 
 int main(int argc, char *argv[]) {
 	initVM();
 	
-	Chunk chunk;
-	
-	initChunk(&chunk);
-	
-	int constant = addConstant(&chunk, 1);
-	
-	writeChunk(&chunk, OP_CONSTANT, 10);
-	writeChunk(&chunk, constant, 10);
-	
-	constant = addConstant(&chunk, 3);
-	
-	writeChunk(&chunk, OP_CONSTANT, 10);
-	writeChunk(&chunk, constant, 10);
-	
-	writeChunk(&chunk, OP_ADD, 10);
-	
-	constant = addConstant(&chunk, 8);
-	
-	writeChunk(&chunk, OP_CONSTANT, 10);
-	writeChunk(&chunk, constant, 10);
-	
-	writeChunk(&chunk, OP_DIVIDE, 10);
-	
-	writeChunk(&chunk, OP_NEGATE, 123);
-	
-	writeChunk(&chunk, OP_RETURN, 10);
-	
-	disassembleChunk(&chunk, "test_chunk");
-	
-	interpret(&chunk);
+	if(argc == 1)  {
+		repl();
+	} else if(argc == 2) {
+		runFile(argv[1]);
+	} else {
+		fprintf(stderr, "Usage: clox[path]\n");
+		exit(64);
+	}
 	
 	freeVM();
-	freeChunk(&chunk);
 	
 	return 0;
 }
