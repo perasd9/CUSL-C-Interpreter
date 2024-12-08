@@ -46,10 +46,94 @@ Token errorToken(const char* message) {
 	return token;
 }
 
+static char advance() {
+	scanner.current++;
+	
+	return scanner.current[-1];
+}
+
+static bool match(char expected) {
+	if(isAtEnd()) return false;
+	
+	
+	return *scanner.current++ == expected;
+}
+
+static char peek() {
+	return *scanner.current;
+}
+
+static void skipWhitespace() {
+	for(;;) {
+		char c = peek();
+		
+		switch(c) {
+			case ' ':
+			case '\r':
+			case '\t':
+				advance();
+				break;
+			case '\n':
+				scanner.line++;
+				advance();
+				break;
+			case '/':
+				if(peekNext() == '/') {
+					while(peek() != '\n' && !isAtEnd()) advance();
+				} else {
+					return;
+				}
+				break;
+			default: return;
+		}
+	}
+}
+
+static char peekNext() {
+	if(isAtEnd()) return '\0';
+	
+	return scanner.current[1];
+}
+
 Token scanToken() {
+	skipWhitespace();
+	
 	scanner.start = scanner.current;
 	
 	if(isAtEnd()) return makeToken(TOKEN_EOF);
+	
+	char c = advance();
+	
+	switch(c) {
+		case '(': return makeToken(TOKEN_LEFT_PAREN);
+		case ')': return makeToken(TOKEN_RIGHT_PAREN);
+		case '{': return makeToken(TOKEN_LEFT_BRACE);
+		case '}': return makeToken(TOKEN_RIGHT_BRACE);
+		case ';': return makeToken(TOKEN_SEMICOLON);
+		case ',': return makeToken(TOKEN_COMMA);
+		case '.': return makeToken(TOKEN_DOT);
+		case '-': return makeToken(TOKEN_MINUS);
+		case '+': return makeToken(TOKEN_PLUS);
+		case '/': return makeToken(TOKEN_SLASH);
+		case '*': return makeToken(TOKEN_STAR);
+		case '!': {
+			if(match('=')) return makeToken(TOKEN_BANG_EQUAL);
+			else return makeToken(TOKEN_BANG);
+		}
+		case '=': {
+			if(match('=')) return makeToken(TOKEN_EQUAL_EQUAL);
+			else return makeToken(TOKEN_EQUAL);
+		}
+		case '<': {
+			if(match('=')) return makeToken(TOKEN_LESS_EQUAL);
+			else return makeToken(TOKEN_LESS);
+		}
+		case '>': {
+			if(match('=')) return makeToken(TOKEN_GREATER_EQUAL);
+			else return makeToken(TOKEN_GREATER);
+		}
+		case '"': return string();
+	}
 	
 	return errorToken("Unexpected character");
 }
