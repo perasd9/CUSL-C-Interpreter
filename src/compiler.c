@@ -80,6 +80,28 @@ static void endCompiler() {
 	emitReturn();
 }
 
+static uint8_t makeConstant(Value value) {
+	int constant = addConstant(currentChunk(), value);
+	
+	if(constant > UINT8_MAX) {
+		error("Too many constants in one chunk.");
+	}
+}
+
+static void emitConstant(Value value) {
+	emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+static void number() {
+	double value = strtod(parser.previous.start, NULL);
+	
+	emitConstant(value);
+}
+
+static void expression() {
+	
+}
+
 bool compile(const char* source, Chunk* chnk) {
 	initScanner(source);
 	chunk = chnk;
