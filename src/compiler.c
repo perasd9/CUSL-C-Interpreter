@@ -38,6 +38,10 @@ static void errorAtCurrent(const char* message) {
 	errorAt(&parser.current, message);
 }
 
+static void error(const char* message) {
+	errorAt(&parser.previous, message);
+}
+
 static void advance() {
 	parser.previous = parser.current;
 	
@@ -85,7 +89,11 @@ static uint8_t makeConstant(Value value) {
 	
 	if(constant > UINT8_MAX) {
 		error("Too many constants in one chunk.");
+		
+		return 0;
 	}
+	
+	return (uint8_t)constant;
 }
 
 static void emitConstant(Value value) {
@@ -100,6 +108,24 @@ static void number() {
 
 static void expression() {
 	
+}
+
+static void grouping() {
+	expression();
+	
+	consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+}
+
+static void unary() {
+	TokenType operatorType = parser.previous.type;
+	
+	expression();
+	
+	switch(operatorType) {
+		case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+		
+		default: return;
+	}
 }
 
 bool compile(const char* source, Chunk* chnk) {
