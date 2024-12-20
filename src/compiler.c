@@ -12,6 +12,28 @@ typedef struct {
 	bool panicMode;
 } Parser;
 
+typedef enum {
+	PREC_NONE,
+	PREC_ASSIGNMENT,
+	PREC_OR,
+	PREC_AND,
+	PREC_EQUALITY,
+	PREC_COMPARISON,
+	PREC_TERM,
+	PREC_FACTOR,
+	PREC_UNARY,
+	PREC_CALL,
+	PREC_PRIMARY,
+} Precedence;
+
+typedef void (*ParseFn)();
+
+typedef struct {
+	ParseFn prefix;
+	ParseFn infix;
+	Precedence precedence;
+} ParseRule;
+
 Parser parser;
 Chunk* chunk;
 
@@ -106,7 +128,13 @@ static void number() {
 	emitConstant(value);
 }
 
+static void parsePrecedence(Precedence precedence) {
+	
+}
+
 static void expression() {
+	parsePrecedence(PREC_ASSIGNMENT);
+	
 	
 }
 
@@ -119,10 +147,27 @@ static void grouping() {
 static void unary() {
 	TokenType operatorType = parser.previous.type;
 	
-	expression();
+	parsePrecedence(PREC_UNARY);
 	
 	switch(operatorType) {
 		case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+		
+		default: return;
+	}
+}
+
+static void binary() {
+	TokenType operatorType = parser.previous.type;
+	
+	ParseRule* rule = getRule(operatorType);
+	
+	parsePrecedence((Precedence)(rule->precedence + 1));
+	
+	switch(operatorType) {
+		case TOKEN_PLUS: emitByte(OP_ADD); break;
+		case TOKEN_MINUS: emitByte(OP_SUBTRACT); break;
+		case TOKEN_STAR: emitByte(OP_MULTIPLY); break;
+		case TOKEN_SLASH: emitByte(OP_DIVIDE); break;
 		
 		default: return;
 	}
