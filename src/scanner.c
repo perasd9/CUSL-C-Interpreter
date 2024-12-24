@@ -51,7 +51,7 @@ static bool isDigit(char c) {
 static bool isAlpha(char c) {
 	return (c >= 'a' && c <= 'z') || 
 		   (c >= 'A' && c <= 'Z') || 
-		    c == '-';
+		    c == '_';
 }
 
 bool isAtEnd() {
