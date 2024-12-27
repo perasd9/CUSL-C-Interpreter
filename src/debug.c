@@ -37,6 +37,18 @@ int disassembleInstruction(Chunk* chunk, int offset) {
 			return simpleInstruction("OP_RETURN", offset);
 		case OP_CONSTANT:
 			return constantInstruction("OP_CONSTANT", chunk, offset);
+		case OP_NIL:
+			return constantInstruction("OP_NIL", chunk, offset);
+		case OP_TRUE:
+			return constantInstruction("OP_TRUE", chunk, offset);
+		case OP_FALSE:
+			return constantInstruction("OP_FALSE", chunk, offset);\
+		case OP_EQUAL:
+			return constantInstruction("OP_EQUAK=L", chunk, offset);
+		case OP_GREATER:
+			return constantInstruction("OP_GREATER", chunk, offset);
+		case OP_LESS:
+			return constantInstruction("OP_LESS", chunk, offset);
 		case OP_ADD:
 			return simpleInstruction("OP_ADD", offset);
 		case OP_SUBTRACT:
@@ -45,6 +57,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
 			return simpleInstruction("OP_MULTIPLY", offset);
 		case OP_DIVIDE:
 			return simpleInstruction("OP_DIVIDE", offset);
+		case OP_NOT:
+			return simpleInstruction("OP_NOT", offset);			
 		case OP_NEGATE:
 			return simpleInstruction("OP_NEGATE", offset);
 		default: 
