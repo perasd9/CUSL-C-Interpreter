@@ -16,5 +16,10 @@ typedef struct {
 } Table;
 
 void initTable(Table* table);
+void freeTable(Table* table);
+bool insert(Table* table, ObjString* key, Value value);
+bool get(Table* table, ObjString* key, Value* value);
+bool delete(Table* table, ObjString* key);
+void tableAddAll(Table* from, Table* to);
 
 #endif
