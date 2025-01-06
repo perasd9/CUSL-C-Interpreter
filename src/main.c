@@ -6,6 +6,7 @@
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
+#include "object.h"
 
 static void repl() {
 	char line[1024];
@@ -72,13 +73,24 @@ static void runFile(const char* path) {
 int main(int argc, char *argv[]) {
 	initVM();
 	
-	if(argc == 1)  {
-		repl();
-	} else if(argc == 2) {
-		runFile(argv[1]);
-	} else {
-		fprintf(stderr, "Usage: clox[path]\n");
-		exit(64);
+	Table table;
+	
+	initTable(&table);
+	
+	struct ObjString string = {{OBJ_STRING, NULL}, 4, "pera", 6};
+	
+	struct ObjString* pp = &string;
+	Value value;
+	value.type = VALUE_OBJ;
+	value.as.number = 5;
+	
+	insert(&table, pp, value);
+	
+	for(int i = 0; i < table.capacity; i++) {
+		if(table.entries->key != NULL)
+			printf("%s, %d \n", table.entries->key->chars, table.entries->value.as.number);
+		else 
+			printf("NULL, NULL\n");
 	}
 	
 	freeVM();
