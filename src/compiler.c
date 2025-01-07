@@ -42,6 +42,9 @@ typedef struct {
 Parser parser;
 Chunk* chunk;
 
+static Chunk* currentChunk() {
+	return chunk;
+}
 
 //------------------------------errors
 static void errorAt(Token* current, const char* message) {
@@ -93,8 +96,16 @@ static void consume(TokenType type, const char* message) {
 	errorAtCurrent(message);
 }
 
-static Chunk* currentChunk() {
-	return chunk;
+static bool check(TokenType type) {
+	return parser.current.type == type;
+}
+
+static bool match(TokenType type) {
+	if(!check(type)) return false;
+	
+	advance();
+	
+	return true;
 }
 
 //------------------------------writing bytes in bytecode of chunk
@@ -141,6 +152,8 @@ static void emitConstant(Value value) {
 static void expression();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+static void statement();
+static void declaration();
 
 //----------------------------------expressions
 static void parsePrecedence(Precedence precedence) {
@@ -166,8 +179,24 @@ static void parsePrecedence(Precedence precedence) {
 
 static void expression() {
 	parsePrecedence(PREC_ASSIGNMENT);
+}
+
+static void printStatement() {
+	expression();
 	
+	consume(TOKEN_SEMICOLON, "Expect ';' after value.");
 	
+	emitByte(OP_PRINT);
+}
+
+static void declaration() {
+	statement();
+}
+
+static void statement() {
+	if(match(TOKEN_PRINT)) {
+		printStatement();
+	}
 }
 
 static void number() {
@@ -287,8 +316,10 @@ bool compile(const char* source, Chunk* chnk) {
 	parser.panicMode = false;
 	
 	advance();
-	expression();
-	consume(TOKEN_EOF, "Expect end of expression.");
+	
+	while(!match(TOKEN_EOF)) {
+		declaration();
+	}
 	
 	endCompiler();
 	
