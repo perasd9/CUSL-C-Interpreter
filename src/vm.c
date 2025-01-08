@@ -189,6 +189,18 @@ static InterpretResult run() {
 				
 				break;
 			}
+			case OP_SET_GLOBAL: {
+				ObjString* name = READ_STRING();
+				
+				if(insert(&vm.globals, name, peek(0))) {
+					del(&vm.globals, name);
+					
+					runtimeError("Undefined variable '%s'.", name->chars);
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				
+				break;
+			}
 		}
 	}
 	
