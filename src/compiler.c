@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -199,13 +200,55 @@ static void parsePrecedence(Precedence precedence) {
 	}
 }
 
+static void addLocal(Token name) {
+	if(compiler->localCount == UINT8_COUNT) {
+		error("Too many local variables stored in scope.");
+		
+		return;
+	}
+	
+	Local* local = &compiler->locals[compiler->localCount++];
+	
+	local->name = name;
+	local->depth = compiler->scopeDepth;
+}
+
+static bool identifiersEqual(Token* name, Token* name1) {
+	if(name->length != name1->length) return false;
+	
+	return memcmp(name.start, name1.start, name.length) == 0;
+}
+
+static void declareVariable() {
+	if(compiler->scopeDepth == 0) return;
+	
+	Token* name = &parser.previous;
+	
+	for(int i = compiler->localCount - 1; i >= 0; i--) {
+		Local* local = &compiler->locals[i];
+		
+		if(local->depth != -1 && local->depth < compiler->scopeDepth) break;
+		
+		if(identifiersEqual(name, &local->name)) {
+			error("Already exists same variable in this scope.");
+		}
+	}
+	
+	addLocal(*name);
+}
+
 static uint8_t parseVariable(const char* message) {
 	consume(TOKEN_IDENTIFIER, message);
+	
+	declareVariable();
+	if(compiler->scopeDepth > 0) return 0;
 	
 	return makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
 }
 
 static void defineVariable(uint8_t global) {
+	if(compiler->scopeDepth > 0) return;
+	
 	emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
