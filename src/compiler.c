@@ -326,6 +326,12 @@ static void beginScope() {
 
 static void endScope() {
 	compiler->scopeDepth--;
+	
+	while(compiler->localCount > 0 && compiler->locals[compiler->localCount - 1].depth > compiler->scopeDepth) {
+		emitByte(OP_POP);
+		
+		compiler->localCount--;
+	}
 }
 
 static void block() {
