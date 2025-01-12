@@ -135,6 +135,14 @@ static void emitReturn() {
 	emitByte(OP_RETURN);
 }
 
+static int emitJump(uint8_t jump) {
+	emitByte(jump);
+	emitByte(0xff);
+	emitByte(0xff);
+	
+	return currentChunk()->count - 2;
+}
+
 static void endCompiler() {
 	emitReturn();
 	
@@ -159,6 +167,17 @@ static uint8_t makeConstant(Value value) {
 
 static void emitConstant(Value value) {
 	emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+static void patchJump(int offset) {
+	int jump = currentChunk()->count - offset - 2;
+	
+	if(jump > UINT16_MAX) {
+		error("Too many bytes to jump over.");
+	}
+	
+	currentChunk()->code[offset] = (jump >> 8) && 0xff;
+	currentChunk()->code[offset + 1] = jump && 0xff;
 }
 
 static void initCompiler(Compiler* cmplr) {
@@ -302,6 +321,18 @@ static void expressionStatement() {
 	emitByte(OP_POP);
 }
 
+static void ifStatement() {
+	consume(TOKEN_LEFT_PAREN, "Expected '(' after 'if' keyword.");
+	expression();
+	consume(TOKEN_RIGHT_PAREN, "Expected ')' after 'if' keyword.");
+	
+	int thenJump = emitJump(OP_JUMP_IF_FALSE);
+	
+	statement();
+	
+	patchJump(thenJump);
+}
+
 static void printStatement() {
 	expression();
 	
@@ -369,6 +400,8 @@ static void block() {
 static void statement() {
 	if(match(TOKEN_PRINT)) {
 		printStatement();
+	} else if (match(TOKEN_IF)) {
+		ifStatement();
 	} else if(match(TOKEN_LEFT_BRACE)) {
 		beginScope();
 		block();
@@ -397,7 +430,7 @@ static uint8_t namedVariable(Token name, bool canAssign) {
 		getOp = OP_GET_LOCAL;
 		setOp = OP_SET_LOCAL;
 	} else {
-		uint8_t arg = makeConstant(OBJ_VAL(copyString(name.start, name.length)));
+		arg = makeConstant(OBJ_VAL(copyString(name.start, name.length)));
 		
 		getOp = OP_GET_GLOBAL;
 		setOp = OP_SET_GLOBAL;
