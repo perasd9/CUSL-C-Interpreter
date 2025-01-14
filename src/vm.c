@@ -108,7 +108,11 @@ static InterpretResult run() {
 		}
 		printf("\n");
 		
+		#ifdef DEBUG_PRINT_CODE_DISASSEMBLE_INSTRUCTION
+		
 		disassembleInstruction(vm.chunk, (int) (vm.ip - vm.chunk->code));
+		
+		#endif
 		
 		#endif
 		
@@ -226,6 +230,12 @@ static InterpretResult run() {
 				uint16_t offset = READ_SHORT();
 				
 				vm.ip += offset;
+				break;
+			}
+			case OP_LOOP: {
+				uint16_t offset = READ_SHORT();
+				
+				vm.ip -= offset;
 				break;
 			}
 		}
