@@ -45,7 +45,15 @@ typedef struct {
 	int depth;
 } Local;
 
+typedef enum {
+	FUNCTION_TYPE,
+	SCRIPT_TYPE,
+} FunctionType;
+
 typedef struct {
+	ObjFunction* function;
+	FunctionType type;
+	
 	Local locals[UINT8_COUNT];
 	int localCount;
 	int scopeDepth;
@@ -56,7 +64,7 @@ Chunk* chunk;
 Compiler* compiler = NULL;
 
 static Chunk* currentChunk() {
-	return chunk;
+	return &compiler->function->chunk;
 }
 
 //------------------------------errors
@@ -154,14 +162,18 @@ static void emitLoop(int loopStart) {
 	emitByte(offset & 0xff);
 }
 
-static void endCompiler() {
+static ObjFunction* endCompiler() {
 	emitReturn();
+	
+	ObjFunction* function = compiler->function;
 	
 	#ifdef DEBUG_PRINT_CODE
 	if(!parser.hadError) {
-		disassembleChunk(currentChunk(), "code");
+		disassembleChunk(currentChunk(), function->name != NULL ? function->name->chars : "<script>");
 	}
 	#endif
+	
+	return function;
 }
 
 static uint8_t makeConstant(Value value) {
@@ -191,10 +203,21 @@ static void patchJump(int offset) {
 	currentChunk()->code[offset + 1] = jump && 0xff;
 }
 
-static void initCompiler(Compiler* cmplr) {
+static void initCompiler(Compiler* cmplr, FunctionType type) {
+	cmplr->function = NULL;
+	cmplr->type = type;
+	
 	cmplr->localCount = 0;
 	cmplr->scopeDepth = 0;
+	
+	cmplr->function = newFunction();
+	
 	compiler = cmplr;
+	
+	Local* local = compiler->locals[compiler->localCount++];
+	local->depth = 0;
+	local->name.start = "";
+	local->name.length = 0;
 }
 
 static void expression();
@@ -202,6 +225,8 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 static void statement();
 static void declaration();
+static void beginScope();
+static ObjFunction* endScope();
 
 //----------------------------------expressions
 static void parsePrecedence(Precedence precedence) {
@@ -421,7 +446,7 @@ static void forStatement() {
 		expression();
 		consume(TOKEN_SEMICOLON, "Expected ';' after condition.");
 		
-		exitJump = emitByte(OP_JUMP_IF_FALSE);
+		exitJump = emitJump(OP_JUMP_IF_FALSE);
 		emitByte(OP_POP);
 	}
 	
@@ -663,11 +688,11 @@ static ParseRule* getRule(TokenType type) {
 	return &rules[type];
 }
 
-bool compile(const char* source, Chunk* chnk) {
+ObjFunction* compile(const char* source) {
 	initScanner(source);
 	
 	Compiler compiler;
-	initCompiler(&compiler);
+	initCompiler(&compiler, SCRIPT_TYPE);
 	
 	chunk = chnk;
 	
@@ -680,7 +705,7 @@ bool compile(const char* source, Chunk* chnk) {
 		declaration();
 	}
 	
-	endCompiler();
+	ObjFunction* function = endCompiler();
 	
-	return !parser.hadError;
+	return parser.hadError ? NULL : function;
 }
