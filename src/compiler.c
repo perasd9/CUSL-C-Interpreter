@@ -51,6 +51,8 @@ typedef enum {
 } FunctionType;
 
 typedef struct {
+	struct Compiler* enclosing;
+	
 	ObjFunction* function;
 	FunctionType type;
 	
@@ -173,6 +175,8 @@ static ObjFunction* endCompiler() {
 	}
 	#endif
 	
+	compiler = compiler->enclosing;
+	
 	return function;
 }
 
@@ -204,6 +208,7 @@ static void patchJump(int offset) {
 }
 
 static void initCompiler(Compiler* cmplr, FunctionType type) {
+	cmplr->enclosing = compiler;
 	cmplr->function = NULL;
 	cmplr->type = type;
 	
@@ -214,7 +219,10 @@ static void initCompiler(Compiler* cmplr, FunctionType type) {
 	
 	compiler = cmplr;
 	
-	Local* local = compiler->locals[compiler->localCount++];
+	if(type != SCRIPT_TYPE)
+		compiler->function->name = copyString(parser.previous.start, parser.previous.length);
+	
+	Local* local = &compiler->locals[compiler->localCount++];
 	local->depth = 0;
 	local->name.start = "";
 	local->name.length = 0;
@@ -227,6 +235,7 @@ static void statement();
 static void declaration();
 static void beginScope();
 static ObjFunction* endScope();
+static void block();
 
 //----------------------------------expressions
 static void parsePrecedence(Precedence precedence) {
@@ -318,6 +327,7 @@ static uint8_t parseVariable(const char* message) {
 }
 
 static void markInitialized() {
+	if(compiler->scopeDepth == 0) return;
 	compiler->locals[compiler->localCount - 1].depth = compiler->scopeDepth;
 }
 
@@ -502,8 +512,49 @@ static void synchronize() {
 	}
 }
 
+static void function(FunctionType type) {
+	Compiler compiler;
+	
+	initCompiler(&compiler, type);
+	beginScope();
+	
+	consume(TOKEN_LEFT_PAREN, "Expected '(' after sanfunction name.");
+	
+	if(!check(TOKEN_RIGHT_PAREN)) {
+		do {
+			compiler.function->arity++;
+			
+			if(compiler.function->arity > 255) errorAtCurrent("Sanfunction cannot have more than 255 parameters.");
+			
+			uint8_t constant = parseVariable("Expect parameter name");
+			
+			defineVariable(constant);
+		} while(match(TOKEN_COMMA));
+	}
+	
+	consume(TOKEN_RIGHT_PAREN, "Expected ')' after parameters.");
+	consume(TOKEN_LEFT_BRACE, "Expected '{' before sanfunction body.");
+	
+	block();
+	
+	ObjFunction* function = endCompiler();
+	emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+}
+
+static void funDeclaration() {
+	uint8_t global = parseVariable("Expect sanfunction name.");
+	
+	markInitialized();
+	
+	function(FUNCTION_TYPE);
+	defineVariable(global);
+}
+
 static void declaration() {
-	if(match(TOKEN_VAR)) {
+	
+	if(match(TOKEN_FUN)) {
+		funDeclaration();	
+	} else if(match(TOKEN_VAR)) {
 		varDeclaration();
 	} else {
 		statement();
@@ -516,7 +567,7 @@ static void beginScope() {
 	compiler->scopeDepth++;
 }
 
-static void endScope() {
+static ObjFunction* endScope() {
 	compiler->scopeDepth--;
 	
 	while(compiler->localCount > 0 && compiler->locals[compiler->localCount - 1].depth > compiler->scopeDepth) {
@@ -693,8 +744,6 @@ ObjFunction* compile(const char* source) {
 	
 	Compiler compiler;
 	initCompiler(&compiler, SCRIPT_TYPE);
-	
-	chunk = chnk;
 	
 	parser.hadError = false;
 	parser.panicMode = false;

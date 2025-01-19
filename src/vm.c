@@ -53,7 +53,7 @@ static void runtimeError(const char* format, ...) {
 	fputs("\n", stderr);
 	
 	CallFrame* frame = &vm.frames[vm.frameCount - 1];
-	size_t instruction = frame->ip - frame->function->chunk->code - 1;
+	size_t instruction = frame->ip - frame->function->chunk.code - 1;
 	int line = frame->function->chunk.lines[instruction];
 	
 	fprintf(stderr, "[line %d] in script\n", line);
@@ -85,9 +85,9 @@ static void concatenate() {
 static InterpretResult run() {
 	CallFrame* frame = &vm.frames[vm.frameCount - 1];
 	
-	#define READ_BYTE() (*frame.ip++)
-	#define READ_CONSTANT() (frame->function->chunk->constants.values[READ_BYTE()])
-	#define READ_SHORT() (frame.ip += 2, (uint16_t) ((frame.ip[-2] << 8) | frame.ip[-1]))
+	#define READ_BYTE() (*frame->ip++)
+	#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
+	#define READ_SHORT() (frame->ip += 2, (uint16_t) ((frame->ip[-2] << 8) | frame->ip[-1]))
 	#define READ_STRING() AS_STRING(READ_CONSTANT())
 	#define BINARY_OP(valueType, op) \
 		do{ \
@@ -212,14 +212,14 @@ static InterpretResult run() {
 			case OP_GET_LOCAL: {
 				uint8_t slot = READ_BYTE();
 				
-				push(frame.slots[slot]);
+				push(frame->slots[slot]);
 				
 				break;
 			}
 			case OP_SET_LOCAL: {
 				uint8_t slot = READ_BYTE();
 				
-				frame.slots[slot] = peek(0);
+				frame->slots[slot] = peek(0);
 				
 				break;
 			}
