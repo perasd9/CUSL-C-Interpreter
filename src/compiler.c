@@ -50,7 +50,7 @@ typedef enum {
 	SCRIPT_TYPE,
 } FunctionType;
 
-typedef struct {
+typedef struct Compiler{
 	struct Compiler* enclosing;
 	
 	ObjFunction* function;
@@ -142,6 +142,7 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
 }
 
 static void emitReturn() {
+	emitByte(OP_NIL);
 	emitByte(OP_RETURN);
 }
 
@@ -439,6 +440,20 @@ static void printStatement() {
 	emitByte(OP_PRINT);
 }
 
+static void returnStatement() {
+	if(compiler->type == SCRIPT_TYPE) {
+		error("Can't return from top-level code.");
+	}
+	
+	if(match(TOKEN_SEMICOLON)) {
+		emitReturn();
+	} else {
+		expression();
+		consume(TOKEN_SEMICOLON, "Expected ';' after return value.");
+		emitByte(OP_RETURN);
+	}
+}
+
 static void whileStatement() {
 	int loopStart = currentChunk()->count;
 	consume(TOKEN_LEFT_PAREN, "Expected '(' after 'while'.");
@@ -617,6 +632,8 @@ static void statement() {
 		beginScope();
 		block();
 		endScope();	
+	} else if(match(TOKEN_RETURN)) {
+		returnStatement();
 	} else {
 		expressionStatement();
 	}
@@ -704,9 +721,7 @@ static void binary(bool canAssign) {
 static void call(bool canAssign) {
 	uint8_t argCount = argumentList();
 	
-	emitByte(OP_CALL, argCount);
-	
-	
+	emitBytes(OP_CALL, argCount);
 }
 
 static void literal(bool canAssign) {

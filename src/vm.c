@@ -11,6 +11,8 @@
 
 VM vm;
 
+static void runtimeError(const char* format, ...);
+
 static void resetStack() {
 	vm.stackTop = vm.stack;
 	vm.frameCount = 0;
@@ -45,16 +47,27 @@ static Value peek(int distance) {
 }
 
 static bool call(ObjFunction* function, int argCount) {
+	if(function->arity != argCount) {
+		runtimeError("Expected %d arguments but got %d", function->arity, argCount);
+		
+		return false;
+	}
+	
+	if(vm.frameCount == FRAMES_MAX) {
+		runtimeError("Stack overflow");
+		
+		return false;
+	}
 	CallFrame* frame = &vm.frames[vm.frameCount++];
 	
 	frame->function = function;
-	frame->ip = function->chunk->code;
+	frame->ip = function->chunk.code;
 	frame->slots = vm.stackTop - argCount - 1;
 	
 	return true;
 }
 
-static bool callVallue(Value callee, int argCount) {
+static bool callValue(Value callee, int argCount) {
 	if(IS_OBJ(callee)) {
 		switch(OBJ_TYPE(callee)) {
 			case OBJ_FUNCTION: {
@@ -77,11 +90,20 @@ static void runtimeError(const char* format, ...) {
 	
 	fputs("\n", stderr);
 	
-	CallFrame* frame = &vm.frames[vm.frameCount - 1];
-	size_t instruction = frame->ip - frame->function->chunk.code - 1;
-	int line = frame->function->chunk.lines[instruction];
-	
-	fprintf(stderr, "[line %d] in script\n", line);
+	for(int i = vm.frameCount - 1; i >= 0; i--) {
+		CallFrame* frame = &vm.frames[i];
+		ObjFunction* function = frame->function;
+		
+		size_t instruction = function->chunk.code - 1;
+		
+		fprintf(stderr, "[Line %d] in ", function->chunk.lines[instruction]);
+		
+		if(function->name == NULL) {
+			fprintf(stderr, "script\n");
+		} else {
+			fprintf(stderr, "%s()\n", function->name->chars);
+		}
+	}
 	
 	resetStack();
 }
@@ -192,7 +214,20 @@ static InterpretResult run() {
 				push(NUMBER_VAL(-AS_NUMBER(pop()))); 
 				break;
 			case OP_RETURN: {
-				return INTERPRET_OK;
+				Value result = pop();
+				vm.frameCount--;
+				
+				if(vm.frameCount == 0) {
+					pop();
+					return INTERPRET_OK;
+				}
+				
+				vm.stackTop = frame->slots;
+				push(result);
+				
+				frame = &vm.frames[vm.frameCount - 1];
+				
+				break;
 			}
 			case OP_PRINT: {
 				printValue(pop());
