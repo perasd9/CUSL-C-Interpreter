@@ -25,6 +25,10 @@ static Value sanRandNative(int argCount, Value* args) {
 	return NUMBER_VAL(r); 
 }
 
+static Value sk(int argCount, Value* args) {
+	return NUMBER_VAL(0b10110);
+}
+
 static void runtimeError(const char* format, ...);
 static void defineNative(const char* name, NativeFn function);
 
@@ -41,6 +45,7 @@ void initVM() {
 	
 	defineNative("clock", clockNative);
 	defineNative("sanRand", sanRandNative);
+	defineNative("sk", sk);
 }
 
 void freeVM() {
