@@ -13,11 +13,19 @@
 
 VM vm;
 
+static void runtimeError(const char* format, ...);
+static void defineNative(const char* name, NativeFn function);
+
 static Value clockNative(int argCount, Value* args) {
+	if(argCount > 0)
+		runtimeError("Too many arguments in 'clockNative' function.");
+		
 	return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC); 
 }
 
 static Value sanRandNative(int argCount, Value* args) {
+	if(argCount > 0)
+		runtimeError("Too many arguments in 'sanRand' function.");
 	srand(time(NULL));
 	
 	int r = rand();
@@ -26,11 +34,10 @@ static Value sanRandNative(int argCount, Value* args) {
 }
 
 static Value sk(int argCount, Value* args) {
+	if(argCount > 0)
+		runtimeError("Too many arguments in 'sk' function.");
 	return NUMBER_VAL(0b10110);
 }
-
-static void runtimeError(const char* format, ...);
-static void defineNative(const char* name, NativeFn function);
 
 static void resetStack() {
 	vm.stackTop = vm.stack;
