@@ -80,6 +80,9 @@ void printObject(Value value) {
 		case OBJ_FUNCTION:
 			printFunction(AS_FUNCTION(value));
 			break;
+		case OBJ_NATIVE:
+			printf("<native fn>");
+			break;
 	}
 }
 
@@ -105,4 +108,12 @@ ObjFunction* newFunction() {
 	initChunk(&function->chunk);
 	
 	return function;
+}
+
+ObjNativeFunction* newNativeFn(NativeFn function) {
+	ObjNativeFunction* native = ALLOCATE_OBJ(ObjNativeFunction, OBJ_NATIVE);
+	
+	native->function = function;
+	
+	return native;
 }

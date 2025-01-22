@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "vm.h"
@@ -11,7 +13,20 @@
 
 VM vm;
 
+static Value clockNative(int argCount, Value* args) {
+	return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC); 
+}
+
+static Value sanRandNative(int argCount, Value* args) {
+	srand(time(NULL));
+	
+	int r = rand();
+	
+	return NUMBER_VAL(r); 
+}
+
 static void runtimeError(const char* format, ...);
+static void defineNative(const char* name, NativeFn function);
 
 static void resetStack() {
 	vm.stackTop = vm.stack;
@@ -23,6 +38,9 @@ void initVM() {
 	vm.objects = NULL;
 	initTable(&vm.globals);
 	initTable(&vm.strings);
+	
+	defineNative("clock", clockNative);
+	defineNative("sanRand", sanRandNative);
 }
 
 void freeVM() {
@@ -67,11 +85,31 @@ static bool call(ObjFunction* function, int argCount) {
 	return true;
 }
 
+static void defineNative(const char* name, NativeFn function) {
+	push(OBJ_VAL(copyString(name, (int)strlen(name))));
+	push(OBJ_VAL(newNativeFn(function)));
+	
+    insert(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    
+    pop();
+    pop();
+}
+
 static bool callValue(Value callee, int argCount) {
 	if(IS_OBJ(callee)) {
 		switch(OBJ_TYPE(callee)) {
 			case OBJ_FUNCTION: {
 				return call(AS_FUNCTION(callee), argCount);
+			}
+			case OBJ_NATIVE: {
+				NativeFn function = AS_NATIVE(callee);
+				Value result = function(argCount, vm.stackTop - argCount);
+				
+				vm.stackTop -= argCount;
+				
+				push(result);
+				
+				return true;
 			}
 			default: break;
 		}
