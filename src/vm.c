@@ -144,7 +144,7 @@ static void runtimeError(const char* format, ...) {
 		CallFrame* frame = &vm.frames[i];
 		ObjFunction* function = frame->function;
 		
-		size_t instruction = function->chunk.code - 1;
+		size_t instruction = (size_t)function->chunk.code - 1;
 		
 		fprintf(stderr, "[Line %d] in ", function->chunk.lines[instruction]);
 		
