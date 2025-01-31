@@ -15,7 +15,8 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 	
 	printf("%-16s %4d '", name, constant);
 	
-	printValue(chunk->constants.values[constant]);
+	if(chunk->constants.capacity != 0)
+		printValue(chunk->constants.values[constant]);
 	
 	printf("'\n");
 	

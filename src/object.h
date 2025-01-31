@@ -41,8 +41,12 @@ typedef struct {
 } ObjFunction;
 
 typedef struct ObjUpvalue {
+	struct ObjUpvalue* next;
+	
 	Obj obj;
 	Value* location;
+	
+	Value closed;
 } ObjUpvalue;
 
 typedef struct {
