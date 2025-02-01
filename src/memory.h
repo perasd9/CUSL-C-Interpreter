@@ -21,6 +21,7 @@
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 void freeObjects();
+void collectGarbage();
 
 #endif
 

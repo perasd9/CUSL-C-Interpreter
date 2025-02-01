@@ -3,7 +3,21 @@
 #include "memory.h"
 #include "vm.h"
 
+#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
+
+#include <stdio.h>
+#include "debug.h"
+
+#endif
+
+
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+	if(newSize > oldSize) {
+		#ifdef DEBUG_STRESS_GARBAGE_COLLETOR
+			collectGarbage();
+		#endif
+	}	
+	
 	if(newSize == 0){
 		free(pointer);
 		
@@ -18,6 +32,10 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 }
 
 static void freeObject(Obj* object) {
+	#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
+		printf("---------- %p free type %d \n", (void*)object, object->type);
+	#endif
+	
 	switch(object->type) {
 		case OBJ_STRING: {
 			ObjString* string = (ObjString*)object;
@@ -62,4 +80,14 @@ void freeObjects() {
 		
 		object = next;
 	}
+}
+
+void collectGarbage() {
+	#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
+		printf("-------------- GC begins \n");
+	#endif
+	
+	#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
+		printf("-------------- GC ends \n");
+	#endif
 }

@@ -48,6 +48,10 @@ static Obj* allocateObject(size_t size, ObjType type) {
 	object->next = vm.objects;
 	vm.objects = object;
 	
+	#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
+		printf("----- %p allocate %zu for %d \n", (void*)object, size, type);
+	#endif
+	
 	return object;
 }
 
