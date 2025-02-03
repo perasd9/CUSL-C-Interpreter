@@ -2,6 +2,7 @@
 
 #include "memory.h"
 #include "vm.h"
+#include "compiler.h"
 
 #ifdef DEBUG_LOG_GARBAGE_COLLECTOR
 
@@ -18,7 +19,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 		#endif
 	}	
 	
-	if(newSize == 0){
+	if(newSize == 0) {
 		free(pointer);
 		
 		return NULL;
@@ -105,7 +106,17 @@ static void markRoots() {
 		markValue(*slot);
 	}
 	
+	for(int i = 0; i < vm.frameCount; i++) {
+		markObject((Obj*)vm.frames[i].closure);
+	}
+	
+	for(ObjUpvalue* upvalue = vm.openUpvalues; upvalue != NULL; upvalue = upvalue->next) {
+		markObject((Obj*)upvalue);
+	}
+	
 	markTable(&vm.globals);
+	
+	markCompilerRoots();
 }
 
 void collectGarbage() {
