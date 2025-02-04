@@ -138,7 +138,7 @@ static void markArray(ValueArray* array) {
 }
 
 static void blackenObject(Obj* object) {
-	#ifdef
+	#ifdef DEBUG_LOG_GARBAGE_COLLECTOR
 		printf("%p blacken ", (void*)object);
 		printValue(OBJ_VAL(object));
 		printf("\n");
