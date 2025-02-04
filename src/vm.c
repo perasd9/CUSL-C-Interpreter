@@ -51,6 +51,10 @@ void initVM() {
 	initTable(&vm.globals);
 	initTable(&vm.strings);
 	
+	vm.grayCapacity = 0;
+	vm.grayCount = 0;
+	vm.grayStack = NULL;
+	
 	defineNative("clock", clockNative);
 	defineNative("sanRand", sanRandNative);
 	defineNative("sk", sk);
