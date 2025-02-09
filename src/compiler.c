@@ -643,9 +643,23 @@ static void funDeclaration() {
 	defineVariable(global);
 }
 
+static void classDeclaration() {
+	consume(TOKEN_IDENTIFIER, "Expect class name.");
+	uint8_t nameConstant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+	declareVariable();
+	
+	emitBytes(OP_CLASS, nameConstant);
+	defineVariable(nameConstant);
+	
+	consume(TOKEN_LEFT_BRACE, "Expect '{' before sanclass body.");
+	consume(TOKEN_RIGHT_BRACE, "Expect '}' after sanclass body");
+}
+
 static void declaration() {
 	
-	if(match(TOKEN_FUN)) {
+	if(match(TOKEN_CLASS)) {
+		classDeclaration();	
+	} else if(match(TOKEN_FUN)) {
 		funDeclaration();	
 	} else if(match(TOKEN_VAR)) {
 		varDeclaration();
