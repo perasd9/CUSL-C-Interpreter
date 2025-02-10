@@ -209,6 +209,7 @@ static void sweep() {
 			object = object->next;
 		} else {
 			Obj* unreached = object;
+			object = object->next;
 			
 			if(previous != NULL) {
 				previous->next = object;
