@@ -99,6 +99,9 @@ void printObject(Value value) {
 		case OBJ_CLASS:
 			printf("%s", AS_CLASS(value)->name->chars);
 			break;
+		case OBJ_INSTANCE:
+			printf("%s instance", AS_INSTANCE(value)->clas->name->chars);
+			break;
 	}
 }
 
@@ -167,4 +170,13 @@ ObjClass* newClass(ObjString* name) {
 	clas->name = name;
 	
 	return clas;
+}
+
+ObjInstance* newInstance(ObjClass* clas) {
+	ObjInstance* instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
+	
+	instance->clas = clas;
+	initTable(&instance->fields);
+	
+	return instance;
 }

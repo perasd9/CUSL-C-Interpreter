@@ -99,6 +99,7 @@ ObjNativeFunction* newNativeFn(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjClass* newClass(ObjString* name);
+ObjInstance* newInstance(ObjClass* clas);
 
 static inline bool isObjType(Value value, ObjType type) {
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
