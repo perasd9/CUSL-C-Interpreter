@@ -168,6 +168,7 @@ ObjClass* newClass(ObjString* name) {
 	ObjClass* clas = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
 	
 	clas->name = name;
+	initTable(&clas->methods);
 	
 	return clas;
 }

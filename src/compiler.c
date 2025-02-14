@@ -643,6 +643,13 @@ static void funDeclaration() {
 	defineVariable(global);
 }
 
+static void method() {
+	consume(TOKEN_IDENTIFIER, "Expect sanmethod name.");
+	
+	uint8_t constant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+	emitBytes(OP_METHOD, constant);
+}
+
 static void classDeclaration() {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
 	uint8_t nameConstant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
@@ -652,6 +659,11 @@ static void classDeclaration() {
 	defineVariable(nameConstant);
 	
 	consume(TOKEN_LEFT_BRACE, "Expect '{' before sanclass body.");
+	
+	while(!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+		method();
+	}
+	
 	consume(TOKEN_RIGHT_BRACE, "Expect '}' after sanclass body");
 }
 
