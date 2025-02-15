@@ -183,6 +183,16 @@ static void closeUpvalues(Value* last) {
 	}
 }
 
+static void defineMethod(ObjString* name) {
+	Value method = peek(0);
+	
+	ObjClass* clas = AS_CLASS(peek(1));
+	
+	insert(&clas->methods, name, method);
+	
+	pop();
+}
+
 static void runtimeError(const char* format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -494,6 +504,11 @@ static InterpretResult run() {
 				pop();
 				
 				push(value);
+				
+				break;
+			}
+			case OP_METHOD: {
+				defineMethod(READ_STRING());
 				
 				break;
 			}

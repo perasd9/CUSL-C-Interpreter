@@ -647,17 +647,51 @@ static void method() {
 	consume(TOKEN_IDENTIFIER, "Expect sanmethod name.");
 	
 	uint8_t constant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+	
+	FunctionType type = FUNCTION_TYPE;
+	function(type);
+	
 	emitBytes(OP_METHOD, constant);
+}
+
+static uint8_t namedVariable(Token name, bool canAssign) {
+	uint8_t getOp, setOp;
+	
+	int arg = resolveLocal(compiler, &name);
+	
+	if(arg != -1) {
+		getOp = OP_GET_LOCAL;
+		setOp = OP_SET_LOCAL;
+	} else if((arg = resolveUpvalue(compiler, &name)) != -1) {
+		getOp = OP_GET_UPVALUE;
+		setOp = OP_SET_UPVALUE;
+	} else {
+		arg = makeConstant(OBJ_VAL(copyString(name.start, name.length)));
+		
+		getOp = OP_GET_GLOBAL;
+		setOp = OP_SET_GLOBAL;
+	}
+	
+	if(canAssign && match(TOKEN_EQUAL)) {
+		expression();
+		emitBytes(setOp, (uint8_t)arg);
+	} else {
+		emitBytes(getOp, (uint8_t)arg);
+	}
 }
 
 static void classDeclaration() {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
+	
+	Token className = parser.previous;
+	
 	uint8_t nameConstant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
 	declareVariable();
 	
 	emitBytes(OP_CLASS, nameConstant);
 	defineVariable(nameConstant);
 	
+	namedVariable(className, false);
 	consume(TOKEN_LEFT_BRACE, "Expect '{' before sanclass body.");
 	
 	while(!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
@@ -665,6 +699,8 @@ static void classDeclaration() {
 	}
 	
 	consume(TOKEN_RIGHT_BRACE, "Expect '}' after sanclass body");
+	
+	emitByte(OP_POP);
 }
 
 static void declaration() {
@@ -736,32 +772,6 @@ static void number(bool canAssign) {
 
 static void string(bool canAssign) {
 	emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
-}
-
-static uint8_t namedVariable(Token name, bool canAssign) {
-	uint8_t getOp, setOp;
-	
-	int arg = resolveLocal(compiler, &name);
-	
-	if(arg != -1) {
-		getOp = OP_GET_LOCAL;
-		setOp = OP_SET_LOCAL;
-	} else if((arg = resolveUpvalue(compiler, &name)) != -1) {
-		getOp = OP_GET_UPVALUE;
-		setOp = OP_SET_UPVALUE;
-	} else {
-		arg = makeConstant(OBJ_VAL(copyString(name.start, name.length)));
-		
-		getOp = OP_GET_GLOBAL;
-		setOp = OP_SET_GLOBAL;
-	}
-	
-	if(canAssign && match(TOKEN_EQUAL)) {
-		expression();
-		emitBytes(setOp, (uint8_t)arg);
-	} else {
-		emitBytes(getOp, (uint8_t)arg);
-	}
 }
 
 static void variable(bool canAssign) {
