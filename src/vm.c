@@ -135,6 +135,11 @@ static bool callValue(Value callee, int argCount) {
 				
 				return true;
 			}
+			case OBJ_BOUND_METHOD: {
+				ObjBoundMethod* boundMethod = AS_BOUND_METHOD(callee);
+				
+				return call(boundMethod->method, argCount);
+			}
 			case OBJ_CLOSURE: 
 				return call(AS_CLOSURE(callee), argCount);
 			default: break;
@@ -144,6 +149,23 @@ static bool callValue(Value callee, int argCount) {
 	runtimeError("Only functions and classes can be called.");
 	
 	return false;
+}
+
+static bool bindMethod(ObjClass* clas, ObjString* name) {
+	Value method;
+	
+	if(!get(&clas->methods, name, &method)) {
+		runtimeError("Cannot access to unexisted property '%s'", name->chars);
+		
+		return false;
+	}
+	
+	ObjBoundMethod* boundMethod = newBoundMethod(peek(0), AS_CLOSURE(method));
+	
+	pop();
+	push(OBJ_VAL(boundMethod));
+	
+	return true;
 }
 
 static ObjUpvalue* captureUpvalue(Value* local) {
@@ -231,7 +253,7 @@ static void concatenate() {
 	
 	char* chars = ALLOCATE(char, length + 1);
 	
-	memcpy(chars, a->chars, b->length);
+	memcpy(chars, a->chars, a->length);
 	memcpy(chars + a->length, b->chars, b->length);
 	chars[length] = '\0';
 	
@@ -486,9 +508,11 @@ static InterpretResult run() {
 					break;
 				}
 				
-				runtimeError("Access to unexisted property '%s'", name->chars);
+				if(!bindMethod(instance->clas, name)) {
+					return INTERPRET_RUNTIME_ERROR;
+				}
 				
-				return INTERPRET_RUNTIME_ERROR;
+				break;
 			}
 			case OP_SET_PROPERTY: {
 				if(!IS_INSTANCE(peek(1))) {

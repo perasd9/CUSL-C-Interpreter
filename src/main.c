@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 	} else if(argc == 2) {
 		runFile(argv[1]);
 	} else {
-		fprintf(stderr, "Usage: clox[path]\n");
+		fprintf(stderr, "Usage: cusl[path]\n");
 		exit(64);
 	}
 	
