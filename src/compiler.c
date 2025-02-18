@@ -50,6 +50,7 @@ typedef struct {
 typedef enum {
 	FUNCTION_TYPE,
 	SCRIPT_TYPE,
+	METHOD_TYPE,
 } FunctionType;
 
 typedef struct {
@@ -234,9 +235,15 @@ static void initCompiler(Compiler* cmplr, FunctionType type) {
 	
 	Local* local = &compiler->locals[compiler->localCount++];
 	local->depth = 0;
-	local->name.start = "";
-	local->name.length = 0;
 	local->isCaptured = false;
+	
+	if(type != FUNCTION_TYPE) {
+		local->name.start = "this";
+		local->name.length = 4;
+	} else {
+		local->name.start = "";
+		local->name.length = 0;
+	}
 }
 
 static void expression();
@@ -648,7 +655,7 @@ static void method() {
 	
 	uint8_t constant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
 	
-	FunctionType type = FUNCTION_TYPE;
+	FunctionType type = METHOD_TYPE;
 	function(type);
 	
 	emitBytes(OP_METHOD, constant);
@@ -849,6 +856,10 @@ static void literal(bool canAssign) {
 	}
 }
 
+static void this_(bool canAssign) {
+	variable(false);
+}
+
 ParseRule rules[] = {
 	[TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
 	[TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
@@ -884,7 +895,7 @@ ParseRule rules[] = {
 	[TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
 	[TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
 	[TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
-	[TOKEN_THIS] = {NULL, NULL, PREC_NONE},
+	[TOKEN_THIS] = {this_, NULL, PREC_NONE},
 	[TOKEN_TRUE] = {literal, NULL, PREC_NONE},
 	[TOKEN_VAR] = {NULL, NULL, PREC_NONE},
 	[TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
