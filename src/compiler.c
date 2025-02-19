@@ -521,6 +521,10 @@ static void returnStatement() {
 	if(match(TOKEN_SEMICOLON)) {
 		emitReturn();
 	} else {
+		if(compiler->type == INITIALIZER_TYPE) {
+			error("Can't return anything else than instance from saninitializer.");
+		}
+		
 		expression();
 		consume(TOKEN_SEMICOLON, "Expected ';' after return value.");
 		emitByte(OP_RETURN);
@@ -669,7 +673,7 @@ static void method() {
 	
 	FunctionType type = METHOD_TYPE;
 	
-	if(parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
+	if(parser.previous.length == 4 && memcmp(parser.previous.start, "saninit", 7) == 0) {
 		type = INITIALIZER_TYPE;
 	}
 	
