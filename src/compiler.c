@@ -51,6 +51,8 @@ typedef enum {
 	FUNCTION_TYPE,
 	SCRIPT_TYPE,
 	METHOD_TYPE,
+	INITIALIZER_TYPE,
+	
 } FunctionType;
 
 typedef struct {
@@ -71,9 +73,14 @@ typedef struct Compiler{
 	Upvalue upvalues[UINT8_COUNT];
 } Compiler;
 
+typedef struct ClassCompiler {
+	struct ClassCompiler* enclosing;
+} ClassCompiler;
+
 Parser parser;
 Chunk* chunk;
 Compiler* compiler = NULL;
+ClassCompiler* currentClass = NULL;
 
 static Chunk* currentChunk() {
 	return &compiler->function->chunk;
@@ -152,7 +159,12 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
 }
 
 static void emitReturn() {
-	emitByte(OP_NIL);
+	if(compiler->type == INITIALIZER_TYPE) {
+		emitBytes(OP_GET_LOCAL, 0);
+	} else {
+		emitByte(OP_NIL);	
+	}
+	
 	emitByte(OP_RETURN);
 }
 
@@ -656,6 +668,11 @@ static void method() {
 	uint8_t constant = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
 	
 	FunctionType type = METHOD_TYPE;
+	
+	if(parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
+		type = INITIALIZER_TYPE;
+	}
+	
 	function(type);
 	
 	emitBytes(OP_METHOD, constant);
@@ -698,6 +715,10 @@ static void classDeclaration() {
 	emitBytes(OP_CLASS, nameConstant);
 	defineVariable(nameConstant);
 	
+	ClassCompiler classCompiler;
+	classCompiler.enclosing = currentClass;
+	currentClass = &classCompiler;
+	
 	namedVariable(className, false);
 	consume(TOKEN_LEFT_BRACE, "Expect '{' before sanclass body.");
 	
@@ -708,6 +729,8 @@ static void classDeclaration() {
 	consume(TOKEN_RIGHT_BRACE, "Expect '}' after sanclass body");
 	
 	emitByte(OP_POP);
+	
+	currentClass = currentClass->enclosing;
 }
 
 static void declaration() {
@@ -857,6 +880,12 @@ static void literal(bool canAssign) {
 }
 
 static void this_(bool canAssign) {
+	if(currentClass == NULL){
+		error("Can't use 'this' outside of a class");
+		
+		return;	
+	}	
+	
 	variable(false);
 }
 
