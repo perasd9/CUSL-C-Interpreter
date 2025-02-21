@@ -152,6 +152,40 @@ static bool callValue(Value callee, int argCount) {
 	return false;
 }
 
+static bool invokeFromClass(ObjClass* clas, ObjString* name, int argCount) {
+	Value method;
+	
+	if(!get(&clas->methods, name, &method)) {
+		runtimeError("Undefined prpoerty 's'.", name->chars);
+		
+		return false;
+	}
+	
+	return call(AS_CLOSURE(method), argCount);
+}
+
+static bool invoke(ObjString* name, int argCount) {
+	Value receiver = peek(argCount);
+	
+	if(!IS_INSTANCE(receiver)) {
+		runtimeError("Only instances can have methods.");
+		
+		return false;
+	}
+	
+	ObjInstance* instance = AS_INSTANCE(receiver);
+	
+	Value value;
+	
+	if(!get(instance->fields, name, &value)) {
+		vm.stackTop[-argCount - 1] = value;
+		
+		return callValue(value, argCount);
+	}
+	
+	return invokeFromClass(instance->clas, name, argCount);
+}
+
 static bool bindMethod(ObjClass* clas, ObjString* name) {
 	Value method;
 	
