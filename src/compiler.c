@@ -723,6 +723,20 @@ static void classDeclaration() {
 	classCompiler.enclosing = currentClass;
 	currentClass = &classCompiler;
 	
+	if(match(TOKEN_LESS)) {
+		consume(TOKEN_IDENTIFIER, "Expect sanclass name for inheritence.");
+		
+		variable(false);
+		
+		if(identifiersEqual(&className, &parser.previous)) {
+			error("Sanclass cannot inherit from itself.");
+		}
+		
+		namedVariable(className, false);
+		
+		emitByte(OP_INHERIT);
+	}
+	
 	namedVariable(className, false);
 	consume(TOKEN_LEFT_BRACE, "Expect '{' before sanclass body.");
 	
