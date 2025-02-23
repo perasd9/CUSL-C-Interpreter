@@ -23,7 +23,7 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 	return offset + 2;
 }
 
-static void invokeInstruction(const char* name, Chunk* chunk, int offset) {
+static int invokeInstruction(const char* name, Chunk* chunk, int offset) {
 	uint8_t constant = chunk->code[offset + 1];
 	uint8_t argCount = chunk->code[offset + 2];
 	
@@ -153,7 +153,7 @@ int disassembleInstruction(Chunk* chunk, int offset) {
 		case OP_INVOKE: 
 			return invokeInstruction("OP_INVOKE", chunk, offset);
 		case OP_INHERIT: 
-			return simpleInstruction("OP_INHERIT", chunk, offset);
+			return simpleInstruction("OP_INHERIT", offset);
 
 		default: 
 			printf("Unknown opcode %d \n", instruction);

@@ -177,7 +177,7 @@ static bool invoke(ObjString* name, int argCount) {
 	
 	Value value;
 	
-	if(!get(instance->fields, name, &value)) {
+	if(get(&instance->fields, name, &value)) {
 		vm.stackTop[-argCount - 1] = value;
 		
 		return callValue(value, argCount);
@@ -581,6 +581,23 @@ static InterpretResult run() {
 				}
 				
 				frame = &vm.frames[vm.frameCount - 1];
+				
+				break;
+			}
+			case OP_INHERIT: {
+				if(!IS_CLASS(peek(1))) {
+					runtimeError("Sanclass can inherit just sanclass.");
+					
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				
+				ObjClass* superClass = AS_CLASS(peek(1));
+				
+				ObjClass* subClass = AS_CLASS(peek(0));
+				
+				tableAddAll(&superClass->methods, &subClass->methods);
+				
+				pop();
 				
 				break;
 			}

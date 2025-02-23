@@ -708,6 +708,10 @@ static uint8_t namedVariable(Token name, bool canAssign) {
 	}
 }
 
+static void variable(bool canAssign) {
+	namedVariable(parser.previous, canAssign);
+}
+
 static void classDeclaration() {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
 	
@@ -820,10 +824,6 @@ static void number(bool canAssign) {
 
 static void string(bool canAssign) {
 	emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
-}
-
-static void variable(bool canAssign) {
-	namedVariable(parser.previous, canAssign);
 }
 
 static void grouping(bool canAssign) {
