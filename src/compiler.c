@@ -712,6 +712,15 @@ static void variable(bool canAssign) {
 	namedVariable(parser.previous, canAssign);
 }
 
+static Token syntheticToken(const char* name) {
+	Token token;
+	
+	token.start = name;
+	token.length = (int)strlen(name);
+	
+	return token;
+}
+
 static void classDeclaration() {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
 	
@@ -735,6 +744,10 @@ static void classDeclaration() {
 		if(identifiersEqual(&className, &parser.previous)) {
 			error("Sanclass cannot inherit from itself.");
 		}
+		
+		beginScope();
+		addLocal(syntheticToken("super"));
+		defineVariable(0);
 		
 		namedVariable(className, false);
 		
