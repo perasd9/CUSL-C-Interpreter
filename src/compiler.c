@@ -75,6 +75,7 @@ typedef struct Compiler{
 
 typedef struct ClassCompiler {
 	struct ClassCompiler* enclosing;
+	bool hasSuperclass;
 } ClassCompiler;
 
 Parser parser;
@@ -733,7 +734,10 @@ static void classDeclaration() {
 	defineVariable(nameConstant);
 	
 	ClassCompiler classCompiler;
+	
 	classCompiler.enclosing = currentClass;
+	classCompiler.hasSuperclass = false;
+	
 	currentClass = &classCompiler;
 	
 	if(match(TOKEN_LESS)) {
@@ -752,6 +756,7 @@ static void classDeclaration() {
 		namedVariable(className, false);
 		
 		emitByte(OP_INHERIT);
+		currentClass->hasSuperclass = true;
 	}
 	
 	namedVariable(className, false);
@@ -764,6 +769,10 @@ static void classDeclaration() {
 	consume(TOKEN_RIGHT_BRACE, "Expect '}' after sanclass body");
 	
 	emitByte(OP_POP);
+	
+	if(classCompiler.hasSuperclass) {
+		endScope();
+	}
 	
 	currentClass = currentClass->enclosing;
 }
