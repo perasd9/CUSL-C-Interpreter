@@ -934,6 +934,18 @@ static void this_(bool canAssign) {
 	variable(false);
 }
 
+static void super_(bool canAssign) {
+	consume(TOKEN_DOT, "Expect '.' after 'super' keyword.");
+	consume(TOKEN_IDENTIFIER, "Expect method name of superclass.");
+	
+	uint8_t name = makeConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+	
+	namedVariable(syntheticToken("this"), false);
+	namedVariable(syntheticToken("super"), false);
+	
+	emitBytes(OP_GET_SUPER, name);
+}
+
 ParseRule rules[] = {
 	[TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
 	[TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
@@ -968,7 +980,7 @@ ParseRule rules[] = {
 	[TOKEN_OR] = {NULL, _or, PREC_OR},
 	[TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
 	[TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
-	[TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
+	[TOKEN_SUPER] = {super_, NULL, PREC_NONE},
 	[TOKEN_THIS] = {this_, NULL, PREC_NONE},
 	[TOKEN_TRUE] = {literal, NULL, PREC_NONE},
 	[TOKEN_VAR] = {NULL, NULL, PREC_NONE},
