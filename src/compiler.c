@@ -935,6 +935,12 @@ static void this_(bool canAssign) {
 }
 
 static void super_(bool canAssign) {
+	if(currentClass == NULL) {
+		error("Cannot use 'super' outside of sanclass.");
+	} else if(!currentClass->hasSuperclass) {
+		error("Cannot use 'super' in a sanclass without superclass");
+	}
+	
 	consume(TOKEN_DOT, "Expect '.' after 'super' keyword.");
 	consume(TOKEN_IDENTIFIER, "Expect method name of superclass.");
 	
