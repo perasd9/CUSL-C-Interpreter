@@ -123,7 +123,11 @@ static bool callValue(Value callee, int argCount) {
 				
 				vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(clas));
 				
+				Value initialier;
 				
+				if(get(&clas->methods, vm.initString, &initialier)) {
+					return call(AS_CLOSURE(initialier), argCount);
+				}
 				
 				return true;
 			}
