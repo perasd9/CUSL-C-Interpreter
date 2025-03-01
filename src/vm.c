@@ -51,6 +51,9 @@ void initVM() {
 	initTable(&vm.globals);
 	initTable(&vm.strings);
 	
+	vm.initString = NULL;
+	vm.initString = copyString("saninit", 7);
+	
 	vm.bytesAllocated = 0;
 	vm.nextGC = 1024 * 1024;
 	
@@ -66,6 +69,7 @@ void initVM() {
 void freeVM() {
 	freeTable(&vm.globals);
 	freeTable(&vm.strings);
+	vm.initString = NULL;
 	freeObjects();
 }
 
@@ -127,6 +131,10 @@ static bool callValue(Value callee, int argCount) {
 				
 				if(get(&clas->methods, vm.initString, &initialier)) {
 					return call(AS_CLOSURE(initialier), argCount);
+				} else if(argCount != 0) {
+					runtimeError("Expected 0 arguments but god %d", argCount);
+					
+					return false;
 				}
 				
 				return true;
