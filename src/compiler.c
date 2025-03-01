@@ -674,7 +674,7 @@ static void method() {
 	
 	FunctionType type = METHOD_TYPE;
 	
-	if(parser.previous.length == 4 && memcmp(parser.previous.start, "saninit", 7) == 0) {
+	if(parser.previous.length == 7 && memcmp(parser.previous.start, "saninit", 7) == 0) {
 		type = INITIALIZER_TYPE;
 	}
 	

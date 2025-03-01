@@ -123,6 +123,8 @@ static bool callValue(Value callee, int argCount) {
 				
 				vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(clas));
 				
+				
+				
 				return true;
 			}
 			case OBJ_NATIVE: {
