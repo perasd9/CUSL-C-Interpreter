@@ -4,17 +4,19 @@ This is a interpreter for the CUSL programming language, implemented in C from s
 
 ## Key components
 
-- **Lexer (Tokenizer)** - Breaks Lox code into tokens
+- **Lexer (Tokenizer)** - Breaks CUSL code into tokens
 - **Parser** - Constructs an abstract syntax tree (AST)
 - **Bytecode Compiler** - Translates AST into a sequence of instructions for the VM
 - **Virtual Machine (VM)** - Interprets and executes the bytecode
 
+## Code pipeline
+
 ## Supported Features
 
 - Variables and Scopes (local and global variables, block scopes)
-- Control Flow (if, while, for, return)
-- Functions and Recursion (first-class functions, closures)
-- Object-Oriented Programming (classes, methods, this, super)
+- Control Flow (sanif, while, for, return)
+- Functions and Recursion (first-class sanfunctions, closures)
+- Object-Oriented Programming (sanclasses, sanmethods, this, super)
 - Garbage Collector (mark-and-sweep for automatic memory management)
 
 ## Example of CUSL code
