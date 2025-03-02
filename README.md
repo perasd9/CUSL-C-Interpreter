@@ -10,6 +10,9 @@ This is a interpreter for the CUSL programming language, implemented in C from s
 - **Virtual Machine (VM)** - Interprets and executes the bytecode
 
 ## Code pipeline
+Flow of code within key components.
+
+![pipeline](https://github.com/user-attachments/assets/0fd234d8-145f-4ba4-9e5e-0a14a9e0b8f3)
 
 ## Supported Features
 
